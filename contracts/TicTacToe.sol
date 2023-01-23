@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-contract ChessGame {
+contract TicTacToe {
     address payable public player1;
     address payable public player2;
     address payable public turn;
@@ -36,13 +36,13 @@ contract ChessGame {
     function move(string memory _move) public payable {
         require(msg.sender == turn, "It is not your turn to move.");
         require(gameStatus == Status.Playing, "Game has not been accepted yet or has ended.");
-        // Check the chess rules and validate the move here
+        // Check the rules and validate the move here
         // TODO
 
         // Update the turn
         turn = (turn == player1) ? player2 : player1;
 
-        // Check for checkmate, stalemate, and other drawing conditions here
+        // Check for checkmate and draw here
         if (checkMate()) {
             gameOver = true;
             winner = (turn == player1) ? player2 : player1;
