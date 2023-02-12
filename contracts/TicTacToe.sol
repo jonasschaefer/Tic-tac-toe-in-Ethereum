@@ -2,9 +2,15 @@
 pragma solidity ^0.8.12;
 
 /**
-* @title TicTacToe
-* @dev A TicTacToe game between two players including a custom stake.
-* @custom:dev-run-script contracts/TicTacToe.sol
+ *
+ * This contract implements a game of Tic Tac Toe between two players. The first player submits a stake in ether
+ * when constructing the contract. The second player then has to submit the same stake to accept the game. The rules
+ * of Tic Tac Toe apply, and the winner of the game will receive both stakes. In case of a draw, both players will
+ * receive their stake back.
+ *
+ * @title TicTacToe
+ * @notice A TicTacToe game between two players including a custom stake.
+ * @custom:dev-run-script contracts/TicTacToe.sol
 */
 contract TicTacToe {
     address payable public player1;
@@ -14,15 +20,16 @@ contract TicTacToe {
 
     bool public gameOver = false;
     uint public stake;
-    enum Status { Pending, Accepted, Playing, Draw, Player1Won, Player2Won, Resigned }
+    enum Status { Pending, Playing, Draw, Player1Won, Player2Won, Resigned }
     Status public gameStatus;
     uint8 public moveCounter = 0;
     
     enum Field { None, X, O }
     Field[3][3] gameBoard;
 
-    constructor() {
+    constructor() payable{
         player1 = payable(msg.sender);
+        stake = msg.value;
         gameStatus = Status.Pending;
     }
 
@@ -56,22 +63,13 @@ contract TicTacToe {
         return string.concat(rowToString(0), "\n", rowToString(1), "\n", rowToString(2), "\n");
     }
 
-    // Function used by player1 for starting the game
-    function startGame(uint _stake) public payable {
-        require(msg.sender == player1, "Only player1 can start the game.");
-        require(_stake > 0, "Stake must be greater than 0.");
-        require(gameStatus == Status.Pending, "Game has already started.");
-        require(player2 != address(0), "Player2 has not joined yet.");
-        stake = _stake;
-        gameStatus = Status.Accepted;
-    }
-
     // Function used by player2 for joining the game
     function acceptGame() public payable {
         require(msg.sender != player1, "Player1 cannot accept their own game.");
         require(msg.value == stake, "Stake must be equal to the value sent by player1.");
-        require(gameStatus == Status.Accepted, "Game has not been started yet or already accepted.");
+        require(gameStatus == Status.Pending, "Game has already been accepted or ended.");
         player2 = payable(msg.sender);
+        stake += msg.value;
         gameStatus = Status.Playing;
         turn = player1;
     }
@@ -95,7 +93,7 @@ contract TicTacToe {
         turn = (turn == player1) ? player2 : player1;
 
         // Increment move counter
-        moveCounter++;
+        moveCounter = moveCounter + 1;
 
         // Check for checkmate and draw here
         if (checkMate()) {
